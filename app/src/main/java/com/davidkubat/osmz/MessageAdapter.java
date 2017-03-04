@@ -1,10 +1,7 @@
 package com.davidkubat.osmz;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.icu.text.SimpleDateFormat;
-import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +12,6 @@ import android.widget.TextView;
 import com.davidkubat.osmz.HttpServer.HttpMessage;
 
 import java.util.List;
-import java.util.zip.Inflater;
-
-/**
- * Created by David Kubát on 19.02.2017.
- */
 
 public class MessageAdapter extends ArrayAdapter<HttpMessage> {
 
@@ -63,7 +55,7 @@ public class MessageAdapter extends ArrayAdapter<HttpMessage> {
 
             case GET:
                 color = getColorFromSource(msg.getSource());
-                tView.setText("GET");
+                tView.setText("GET " + msg.getDesiredObject());
                 break;
         }
         dView.setTextColor(color);

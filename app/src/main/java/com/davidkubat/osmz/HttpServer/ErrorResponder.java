@@ -24,7 +24,7 @@ public class ErrorResponder implements HttpMessageConsumer {
     @Override
     public boolean newHttpMessage(HttpMessage msg, boolean consumed) {
         if(consumed)
-            return false;
+            return true;
 
         try {
             OutputStream stream = msg.getClient().getOutputStream();
@@ -45,7 +45,7 @@ public class ErrorResponder implements HttpMessageConsumer {
                     "   <center><h1>Not Found</h1></center>" +
                     "   <center><p>The requested URL %s was not found on this server.</p></center>" +
                     "</body>" +
-                    "</html>", "Index.html");
+                    "</html>", msg.getDesiredObject());
             writer.write("Content-Length: ");
             writer.write(response.length());
             writer.newLine();

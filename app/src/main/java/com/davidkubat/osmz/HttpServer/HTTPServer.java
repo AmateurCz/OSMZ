@@ -1,33 +1,26 @@
 package com.davidkubat.osmz.HttpServer;
 
 import android.content.Context;
-import android.widget.ArrayAdapter;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-
-/**
- * Created by David Kubát on 19.02.2017.
- */
 
 public class HTTPServer {
 
     private final Context context;
-    IncomingConnectionListener incomingConnectionListener;
-    Thread listenerThread;
-    ArrayList<HttpMessageConsumer> messageConsumers;
+    private IncomingConnectionListener incomingConnectionListener;
+    private Thread listenerThread;
+    private ArrayList<HttpMessageConsumer> messageConsumers;
     private String localhost;
 
     public HTTPServer(Context context){
         this.context = context;
         listenerThread = null;
-        messageConsumers = new ArrayList<HttpMessageConsumer>();
+        messageConsumers = new ArrayList<>();
     }
 
     public void start(){
@@ -65,7 +58,7 @@ public class HTTPServer {
         getIncomingConnectionListener().stop();
     }
 
-    public IncomingConnectionListener getIncomingConnectionListener() {
+    private IncomingConnectionListener getIncomingConnectionListener() {
         if(incomingConnectionListener == null){
             incomingConnectionListener = new IncomingConnectionListener(context);
             incomingConnectionListener.setConnectionHandler(new ConnectionHandler() {
@@ -119,18 +112,9 @@ public class HTTPServer {
         for (HttpMessageConsumer var: messageConsumers ) {
             handled |= var.newHttpMessage(httpMessage, handled);
         }
-        if(httpMessage.isClientRequest() && !handled)
-            getErrorResponder().newHttpMessage(httpMessage, handled);
     }
 
     public void addMsgHandler(HttpMessageConsumer httpMessageConsumer) {
         this.messageConsumers.add(httpMessageConsumer);
-    }
-
-    ErrorResponder responder;
-    public ErrorResponder getErrorResponder() {
-        if(responder == null)
-            responder = new ErrorResponder();
-        return responder;
     }
 }
