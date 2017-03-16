@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.davidkubat.osmz.HttpServer.HttpMessage;
 
 import java.util.List;
+import java.util.Locale;
 
 public class MessageAdapter extends ArrayAdapter<HttpMessage> {
 
@@ -20,7 +21,7 @@ public class MessageAdapter extends ArrayAdapter<HttpMessage> {
 
     public MessageAdapter(Context context, List<HttpMessage> objects) {
         super(context, R.layout.message, objects);
-        format = new java.text.SimpleDateFormat("HH:mm:ss:SSS");
+        format = new java.text.SimpleDateFormat("HH:mm:ss:SSS", Locale.US);
         mInflater = LayoutInflater.from(context);
     }
 
@@ -56,6 +57,16 @@ public class MessageAdapter extends ArrayAdapter<HttpMessage> {
             case GET:
                 color = getColorFromSource(msg.getSource());
                 tView.setText("GET " + msg.getDesiredObject());
+                break;
+
+            case OK:
+                color = getColorFromSource(msg.getSource());
+                tView.setText("OK " + msg.getDesiredObject());
+                break;
+
+            case NOTFOUND:
+                color = getColorFromSource(msg.getSource());
+                tView.setText("Not found " + msg.getDesiredObject());
                 break;
         }
         dView.setTextColor(color);

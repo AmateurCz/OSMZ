@@ -1,15 +1,21 @@
 package com.davidkubat.osmz.HttpServer;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
 public class HttpMessage {
 
+    private static final SimpleDateFormat dateFormater = new java.text.SimpleDateFormat("EE, dd MMM yyyy kk:mm:ss");
     private final String source;
     private final MsgType type;
     private final Date createdAt;
@@ -18,6 +24,7 @@ public class HttpMessage {
     private Socket client;
     private ArrayList<String> headers;
     private String content;
+    private InputStream contentStream;
 
 
     public HttpMessage(MsgType type){
@@ -45,8 +52,8 @@ public class HttpMessage {
         String source = String.format("%s:%d",
                 socket.getInetAddress().toString(),
                 socket.getPort());
-
-        BufferedReader r = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        InputStream stream = socket.getInputStream();
+        BufferedReader r = new BufferedReader(new InputStreamReader(stream));
         String line;
         line = r.readLine();
 
@@ -66,6 +73,7 @@ public class HttpMessage {
             line = r.readLine();
         }
 
+        //stream.close();
         if(method == null)
             return  new HttpMessage(MsgType.ERROR, source, "Method name is missing.");
 
@@ -78,6 +86,56 @@ public class HttpMessage {
             return  new HttpMessage(MsgType.ERROR, source, String.format("Method %s is not implemented.", method));
         }
         return new HttpMessage(type, httpVersion, source, desiredObject, headers, socket);
+    }
+
+    public static HttpMessage buildFromResponse(MsgType responseType, long contentLenght, String mimeType, InputStream content, HttpMessage responseTo) {
+        ArrayList<String> headers = new ArrayList<>();
+
+        switch (responseType) {
+            case OK:
+                headers.add("HTTP/1.1 200 OK");
+                break;
+            case NOTFOUND:
+                headers.add("HTTP/1.1 404 Not Found");
+                break;
+            default:
+                throw new IllegalArgumentException("responseType");
+        }
+        headers.add(String.format("Date: %s GTM", dateFormater.format(new Date())));
+        headers.add("Server: TrololoServer - Android");
+        headers.add("Content-Length: " + Long.toString(contentLenght));
+        headers.add("Content-Type: " + mimeType);
+        headers.add("Connection: close");
+
+        HttpMessage message = new HttpMessage(responseType, "localhost");
+        message.headers = headers;
+        message.client = responseTo.getClient();
+        message.contentStream = content;
+        return message;
+    }
+
+    public void send() throws IOException {
+        OutputStream stream = client.getOutputStream();
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream));
+
+        for (String header : this.headers) {
+            writer.write(header);
+            writer.newLine();
+        }
+        writer.newLine();
+        writer.flush();
+        if (contentStream != null) {
+            final int bufferSize = 1024;
+            byte[] buffer = new byte[bufferSize];
+            int byteCount;
+
+            do {
+                byteCount = contentStream.read(buffer, 0, buffer.length);
+                stream.write(buffer, 0, byteCount);
+            } while (byteCount == bufferSize);
+            stream.flush();
+            //stream.close();
+        }
     }
 
     public MsgType getType() {
@@ -118,9 +176,10 @@ public class HttpMessage {
                 || this.type == MsgType.UPDATE;
     }
 
+
     public enum MsgType {
         ServerStart, ServerStop,
-        ERROR, GET, PUT, POST, DELETE, OK, UPDATE
+        ERROR, GET, PUT, POST, UPDATE, DELETE, OK, NOTFOUND
     }
 
 }

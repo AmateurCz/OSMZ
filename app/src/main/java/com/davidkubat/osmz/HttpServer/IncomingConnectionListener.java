@@ -4,17 +4,11 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.channels.ClosedByInterruptException;
 
 import javax.net.ServerSocketFactory;
-
-/**
- * Created by David Kubát on 19.02.2017.
- */
 
 public class IncomingConnectionListener{
 
@@ -24,9 +18,14 @@ public class IncomingConnectionListener{
     private int port;
     private ServerSocket socket;
 
+    public IncomingConnectionListener(Context context) {
+        this.context = context;
+    }
+
     public boolean isRunning() {
         return isRunning;
     }
+
     public int getPort() {
         return port;
     }
@@ -39,10 +38,6 @@ public class IncomingConnectionListener{
 
     public void setConnectionHandler(ConnectionHandler listener){
         this.listener = listener;
-    }
-
-    public IncomingConnectionListener(Context context){
-        this.context = context;
     }
 
     public void stop(){
@@ -72,6 +67,7 @@ public class IncomingConnectionListener{
                 Log.i("HTTP Server",String.format("Client connected from: %s:%d",
                         clientSocket.getInetAddress().toString(),
                         clientSocket.getPort()));
+
                 listener.handleConnection(clientSocket);
             }
         }

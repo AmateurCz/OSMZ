@@ -2,18 +2,16 @@ package com.davidkubat.osmz.HttpServer;
 
 import android.content.Context;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 
 public class HTTPServer {
 
     private final Context context;
+    private HTTPServer instance;
     private IncomingConnectionListener incomingConnectionListener;
     private Thread listenerThread;
+    private ThreadPoolConnectionHandler threadPoolConnectionHandler;
     private ArrayList<HttpMessageConsumer> messageConsumers;
     private String localhost;
 
@@ -21,6 +19,7 @@ public class HTTPServer {
         this.context = context;
         listenerThread = null;
         messageConsumers = new ArrayList<>();
+        instance = this;
     }
 
     public void start(){
@@ -41,11 +40,13 @@ public class HTTPServer {
                 } catch (Exception e) {
                     return;
                 }
-                messageArrived(new HttpMessage(HttpMessage.MsgType.ServerStart, localhost));
+
+                ConnectionHandler handler = getConnectionHandler();
+                handler.messageArrived(new HttpMessage(HttpMessage.MsgType.ServerStart, localhost));
                 IncomingConnectionListener lis = getIncomingConnectionListener();
                 lis.setPort(port);
                 lis.listenForConnections();
-                messageArrived(new HttpMessage(HttpMessage.MsgType.ServerStop, localhost));
+                handler.messageArrived(new HttpMessage(HttpMessage.MsgType.ServerStop, localhost));
             }
         });
         listenerThread.start();
@@ -55,49 +56,15 @@ public class HTTPServer {
         if(listenerThread == null)
             return;
         listenerThread = null;
+        if (threadPoolConnectionHandler != null)
+            threadPoolConnectionHandler.stop();
         getIncomingConnectionListener().stop();
     }
 
     private IncomingConnectionListener getIncomingConnectionListener() {
         if(incomingConnectionListener == null){
             incomingConnectionListener = new IncomingConnectionListener(context);
-            incomingConnectionListener.setConnectionHandler(new ConnectionHandler() {
-                @Override
-                public void handleConnection(Socket clientSocket) {
-
-                    try {
-                        HttpMessage msg = HttpMessage.BuildFromStream(clientSocket);
-                        messageArrived(msg);
-                        clientSocket.close();
-                    }
-                    catch (Exception e){
-                        String source = String.format("Client connected from: %s:%d",
-                                clientSocket.getInetAddress().toString(),
-                                clientSocket.getPort());
-
-                        Writer writer = new StringWriter();
-                        PrintWriter printWriter = new PrintWriter(writer);
-                        printWriter.write(e.getMessage());
-                        printWriter.write(System.getProperty("line.separator"));
-                        e.printStackTrace(printWriter);
-                        messageArrived(new HttpMessage(HttpMessage.MsgType.ERROR,
-                                source,
-                                writer.toString()));
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void errorOccurred(Exception e) {
-
-                    Writer writer = new StringWriter();
-                    PrintWriter printWriter = new PrintWriter(writer);
-                    printWriter.write(e.getMessage());
-                    printWriter.write(System.getProperty("line.separator"));
-                    e.printStackTrace(printWriter);
-                    messageArrived(new HttpMessage(HttpMessage.MsgType.ERROR, localhost, printWriter.toString()));
-                }
-            });
+            incomingConnectionListener.setConnectionHandler(getConnectionHandler());
         }
         return incomingConnectionListener;
     }
@@ -106,15 +73,13 @@ public class HTTPServer {
         return incomingConnectionListener != null && incomingConnectionListener.isRunning();
     }
 
-
-    private void messageArrived(HttpMessage httpMessage) {
-        boolean handled = false;
-        for (HttpMessageConsumer var: messageConsumers ) {
-            handled |= var.newHttpMessage(httpMessage, handled);
-        }
-    }
-
     public void addMsgHandler(HttpMessageConsumer httpMessageConsumer) {
         this.messageConsumers.add(httpMessageConsumer);
+    }
+
+    public ConnectionHandler getConnectionHandler() {
+        if (threadPoolConnectionHandler == null)
+            threadPoolConnectionHandler = new ThreadPoolConnectionHandler(messageConsumers, localhost);
+        return threadPoolConnectionHandler;
     }
 }

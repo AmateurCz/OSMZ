@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.davidkubat.osmz.HttpServer.ErrorResponder;
+import com.davidkubat.osmz.HttpServer.FileBrowserResponder;
 import com.davidkubat.osmz.HttpServer.HTTPServer;
 import com.davidkubat.osmz.HttpServer.HttpMessage;
 import com.davidkubat.osmz.HttpServer.HttpMessageConsumer;
@@ -49,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
                 HttpMessage msg = adapter.getItem(position);
 // 2. Chain together various setter methods to set the dialog characteristics
 
-                String detailText = "";
+                String detailText;
                 if (msg.getType() == HttpMessage.MsgType.ERROR) {
                     detailText = msg.getContent();
-                } else if (msg.isClientRequest()) {
+                } else {
                     StringBuilder sb = new StringBuilder();
                     boolean newLine = false;
                     for (String header : msg.getHeaders()) {
@@ -146,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                 }
-                return;
             }
 
             // other 'case' lines to check for other
@@ -183,8 +183,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            server.addMsgHandler(new PageResponder());
-            server.addMsgHandler(new ErrorResponder());
+            server.addMsgHandler(new FileBrowserResponder(server));
+            server.addMsgHandler(new PageResponder(server));
+            server.addMsgHandler(new ErrorResponder(server));
         }
         int serverPort = 8080;
         server.start(serverPort);
