@@ -41,7 +41,8 @@ public class ThreadPoolConnectionHandler implements ConnectionHandler {
             public void run() {
                 try {
                     HttpMessage msg = HttpMessage.BuildFromStream(clientSocket);
-                    messageArrived(msg);
+                    if (msg != null)
+                        messageArrived(msg);
                     clientSocket.close();
                 } catch (Exception e) {
                     String source = String.format(

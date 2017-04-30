@@ -72,6 +72,8 @@ public class HttpMessage {
             headers.add(line);
             line = r.readLine();
         }
+        if (headers.size() == 0)
+            return null;
 
         //stream.close();
         if(method == null)
@@ -88,7 +90,7 @@ public class HttpMessage {
         return new HttpMessage(type, httpVersion, source, desiredObject, headers, socket);
     }
 
-    public static HttpMessage buildFromResponse(MsgType responseType, long contentLenght, String mimeType, InputStream content, HttpMessage responseTo) {
+    public static HttpMessage buildFromResponse(MsgType responseType, String desiredObject, long contentLenght, String mimeType, InputStream content, HttpMessage responseTo) {
         ArrayList<String> headers = new ArrayList<>();
 
         switch (responseType) {
@@ -111,6 +113,7 @@ public class HttpMessage {
         message.headers = headers;
         message.client = responseTo.getClient();
         message.contentStream = content;
+        message.desiredObject = desiredObject;
         return message;
     }
 

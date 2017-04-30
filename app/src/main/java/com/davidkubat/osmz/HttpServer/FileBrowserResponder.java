@@ -2,7 +2,6 @@ package com.davidkubat.osmz.HttpServer;
 
 import android.os.Environment;
 import android.util.Log;
-import android.webkit.MimeTypeMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -93,9 +92,9 @@ public class FileBrowserResponder implements HttpMessageConsumer {
             data = new byte[0];
         }
 
-        String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension("json");
+        String type = "application/json";
         try {
-            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, data.length, type, new ByteArrayInputStream(data), msg);
+            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, msg.getDesiredObject(), data.length, type, new ByteArrayInputStream(data), msg);
             message.send();
             httpServer.getConnectionHandler().messageArrived(message);
         } catch (Exception e) {

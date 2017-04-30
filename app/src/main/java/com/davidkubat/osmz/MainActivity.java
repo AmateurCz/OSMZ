@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.davidkubat.osmz.HttpServer.CgiBinResponder;
 import com.davidkubat.osmz.HttpServer.ErrorResponder;
 import com.davidkubat.osmz.HttpServer.FileBrowserResponder;
 import com.davidkubat.osmz.HttpServer.HTTPServer;
@@ -183,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            server.addMsgHandler(new CgiBinResponder(server));
             server.addMsgHandler(new FileBrowserResponder(server));
             server.addMsgHandler(new PageResponder(server));
             server.addMsgHandler(new ErrorResponder(server));

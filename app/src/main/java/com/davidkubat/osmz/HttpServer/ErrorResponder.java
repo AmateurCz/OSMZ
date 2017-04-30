@@ -42,7 +42,7 @@ public class ErrorResponder implements HttpMessageConsumer {
 
         String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension("html");
         try {
-            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, data.length, type, new ByteArrayInputStream(data), msg);
+            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, msg.getDesiredObject(), data.length, type, new ByteArrayInputStream(data), msg);
             message.send();
             httpServer.getConnectionHandler().messageArrived(message);
         } catch (Exception e) {

@@ -45,8 +45,10 @@ public class PageResponder implements HttpMessageConsumer {
         String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
 
         try {
-            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, target.length(), type, new FileInputStream(target), msg);
+            FileInputStream fStream = new FileInputStream(target);
+            HttpMessage message = HttpMessage.buildFromResponse(HttpMessage.MsgType.OK, msg.getDesiredObject(), target.length(), type, fStream, msg);
             message.send();
+            fStream.close();
             httpServer.getConnectionHandler().messageArrived(message);
         } catch (Exception e) {
             e.printStackTrace();
