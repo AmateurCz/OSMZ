@@ -15,9 +15,9 @@ import java.io.InputStreamReader;
 
 public class CgiBinResponder implements HttpMessageConsumer {
 
-    private final HTTPServer httpServer;
+    private final HttpServer httpServer;
 
-    public CgiBinResponder(HTTPServer server) {
+    public CgiBinResponder(HttpServer server) {
         this.httpServer = server;
     }
 

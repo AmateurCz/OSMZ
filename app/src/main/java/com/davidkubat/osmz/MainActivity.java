@@ -1,7 +1,12 @@
 package com.davidkubat.osmz;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,13 +20,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
-import com.davidkubat.osmz.HttpServer.CgiBinResponder;
-import com.davidkubat.osmz.HttpServer.ErrorResponder;
-import com.davidkubat.osmz.HttpServer.FileBrowserResponder;
-import com.davidkubat.osmz.HttpServer.HTTPServer;
 import com.davidkubat.osmz.HttpServer.HttpMessage;
-import com.davidkubat.osmz.HttpServer.HttpMessageConsumer;
-import com.davidkubat.osmz.HttpServer.PageResponder;
 
 import java.util.ArrayList;
 
@@ -33,13 +32,10 @@ public class MainActivity extends AppCompatActivity {
     Button startButton;
     Button stopButton;
 
-    HTTPServer server;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         startButton = (Button) findViewById(R.id.start_button);
         stopButton = (Button) findViewById(R.id.stop_button);
         messageList = (ListView) findViewById(R.id.message_list);
@@ -57,13 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     StringBuilder sb = new StringBuilder();
                     boolean newLine = false;
-                    for (String header : msg.getHeaders()) {
-                        if (newLine) {
-                            sb.append(System.getProperty("line.separator"));
-                        } else
-                            newLine = true;
-                        sb.append(header.trim());
-                    }
+
                     detailText = sb.toString();
                 }
                 builder.setMessage(detailText)
@@ -95,8 +85,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         adapter = new MessageAdapter(this, new ArrayList<HttpMessage>());
+        if (HttpServerService.messageQueue != null) {
+            while (HttpServerService.messageQueue.peek() != null) {
+                adapter.add(HttpServerService.messageQueue.poll());
+            }
+        }
         messageList.setAdapter(adapter);
-
 
         // Here, thisActivity is the current activity
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -131,6 +125,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                while (HttpServerService.messageQueue.peek() != null) {
+                    adapter.add(HttpServerService.messageQueue.poll());
+                }
+            }
+        }, new IntentFilter(HttpServerService.HTTP_MESSAGE));
+        checkServer();
     }
 
     @Override
@@ -155,47 +159,39 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onPause() {
-        stopServer();
-        super.onPause();
+    private void checkServer() {
+        Intent mServiceIntent = new Intent(this, HttpServerService.class);
+        if (isMyServiceRunning(HttpServerService.class)) {
+            startButton.setEnabled(false);
+            stopButton.setEnabled(true);
+        } else {
+            startButton.setEnabled(true);
+            stopButton.setEnabled(false);
+        }
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void startServer() {
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
 
-        if (server != null && server.isRunning())
-            throw new IllegalStateException("Server is already running");
-        if (server == null) {
-            server = new HTTPServer(this);
-            server.addMsgHandler(new HttpMessageConsumer() {
-
-                @Override
-                public boolean newHttpMessage(final HttpMessage msg, boolean consumed) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            adapter.add(msg);
-                        }
-                    });
-
-                    return !msg.isClientRequest();
-                }
-            });
-
-            server.addMsgHandler(new CgiBinResponder(server));
-            server.addMsgHandler(new FileBrowserResponder(server));
-            server.addMsgHandler(new PageResponder(server));
-            server.addMsgHandler(new ErrorResponder(server));
-        }
-        int serverPort = 8080;
-        server.start(serverPort);
+        Intent mServiceIntent = new Intent(this, HttpServerService.class);
+        startService(mServiceIntent);
     }
 
     private void stopServer() {
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
-        server.stop();
+        Intent mServiceIntent = new Intent(this, HttpServerService.class);
+        stopService(mServiceIntent);
     }
 }

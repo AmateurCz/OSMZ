@@ -5,17 +5,17 @@ import android.content.Context;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class HTTPServer {
+public class HttpServer {
 
     private final Context context;
-    private HTTPServer instance;
+    private HttpServer instance;
     private IncomingConnectionListener incomingConnectionListener;
     private Thread listenerThread;
     private ThreadPoolConnectionHandler threadPoolConnectionHandler;
     private ArrayList<HttpMessageConsumer> messageConsumers;
     private String localhost;
 
-    public HTTPServer(Context context){
+    public HttpServer(Context context) {
         this.context = context;
         listenerThread = null;
         messageConsumers = new ArrayList<>();

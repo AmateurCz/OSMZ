@@ -11,9 +11,9 @@ import java.io.ByteArrayInputStream;
 
 public class ErrorResponder implements HttpMessageConsumer {
 
-    private final HTTPServer httpServer;
+    private final HttpServer httpServer;
 
-    public ErrorResponder(HTTPServer server) {
+    public ErrorResponder(HttpServer server) {
         this.httpServer = server;
     }
 

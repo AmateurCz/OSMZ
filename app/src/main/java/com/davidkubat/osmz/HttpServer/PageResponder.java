@@ -9,9 +9,9 @@ import java.io.FileInputStream;
 public class PageResponder implements HttpMessageConsumer {
 
     private final File extStoragePath;
-    private final HTTPServer httpServer;
+    private final HttpServer httpServer;
 
-    public PageResponder(HTTPServer server) {
+    public PageResponder(HttpServer server) {
         String externalStorageState = Environment.getExternalStorageState();
         if (!externalStorageState.equals(Environment.MEDIA_MOUNTED))
             throw new IllegalStateException("External storage is not mounted");
@@ -33,7 +33,7 @@ public class PageResponder implements HttpMessageConsumer {
         if (desiredFile.contains("?")) {
             desiredFile = desiredFile.substring(0, desiredFile.indexOf('?'));
         }
-        File target = new File(extStoragePath, desiredFile);
+        File target = new File(extStoragePath + "/Download", desiredFile);
         if (!target.exists()) {
             return false;
         }

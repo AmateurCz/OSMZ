@@ -14,8 +14,16 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class HttpMessage {
+    public final static String CreatedAtKey = "CreatedAt";
+    public final static String DesiredObjectKey = "DesiredObject";
+    public final static String ContentKey = "Content";
+    public final static String HeadersKey = "Headers";
+    public final static String SourceKey = "Source";
+    public final static String MethodKey = "Method";
 
     private static final SimpleDateFormat dateFormater = new java.text.SimpleDateFormat("EE, dd MMM yyyy kk:mm:ss");
+
+
     private final String source;
     private final MsgType type;
     private final Date createdAt;
@@ -184,5 +192,4 @@ public class HttpMessage {
         ServerStart, ServerStop,
         ERROR, GET, PUT, POST, UPDATE, DELETE, OK, NOTFOUND
     }
-
 }

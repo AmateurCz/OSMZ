@@ -11,9 +11,9 @@ import java.io.File;
 
 public class FileBrowserResponder implements HttpMessageConsumer {
     private final File extStoragePath;
-    private final HTTPServer httpServer;
+    private final HttpServer httpServer;
 
-    public FileBrowserResponder(HTTPServer server) {
+    public FileBrowserResponder(HttpServer server) {
         this.httpServer = server;
         String externalStorageState = Environment.getExternalStorageState();
         if (!externalStorageState.equals(Environment.MEDIA_MOUNTED))
